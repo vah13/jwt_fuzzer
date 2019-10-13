@@ -44,44 +44,46 @@ def start_fuzz(args, _header, _body, _signature):
     signature = _signature
     # get inject point
     # need to add the situation when --inject_point is 'body,user|header,kid'
+    _inject_argument = args.inject_point
+    for _inject_point in _inject_argument.split('|'):
 
-    if args.inject_point.split(',')[0] == 'header':
-        _is_header_or_body = 'header'
-    if args.inject_point.split(',')[0] == 'body':
-        _is_header_or_body = 'body'
-    _inject_param = args.inject_point.split(',')[1]
+        if _inject_point.split(',')[0] == 'header':
+            _is_header_or_body = 'header'
+        if _inject_point.split(',')[0] == 'body':
+            _is_header_or_body = 'body'
+        _inject_param = _inject_point.split(',')[1]
 
-    if _is_header_or_body == 'header':
-        HF = fuzz_module.Header_Fuzz(header, _inject_param)  # inject point
-        HF.mutation("string")  # payload type
-        mutated_headers = HF.build_mutation_header_parameter()  # build json to inject in jwt
+        if _is_header_or_body == 'header':
+            HF = fuzz_module.Header_Fuzz(header, _inject_param)  # inject point
+            HF.mutation("string")  # payload type
+            mutated_headers = HF.build_mutation_header_parameter()  # build json to inject in jwt
 
-        for m_header in mutated_headers:
-            m_header = m_header.strip()
-            if args.sign == 0:
-                _jwt = (m_header + "." + base64.b64encode(body) + "." + signature).replace("=",
-                                                                                           "")  # keep original signature
-            else:
-                _jwt = sign_message(base64.b64decode(m_header), body, args.secret)  # sign message
+            for m_header in mutated_headers:
+                m_header = m_header.strip()
+                if args.sign == 0:
+                    _jwt = (m_header + "." + base64.b64encode(body) + "." + signature).replace("=",
+                                                                                               "")  # keep original signature
+                else:
+                    _jwt = sign_message(base64.b64decode(m_header), body, args.secret)  # sign message
 
-            print_jwt(base64.b64decode(m_header), body, _jwt.split(".")[2])
-            request_sender.send_req(_jwt)  # send request
+                print_jwt(base64.b64decode(m_header), body, _jwt.split(".")[2])
+                request_sender.send_req(_jwt)  # send request
 
-    if _is_header_or_body == 'body':
-        BF = fuzz_module.Body_Fuzz(body, _inject_param)  # inject point
-        BF.mutation("string")  # payload type
-        mutated_body = BF.build_mutation_body_parameter()  # build json to inject in jwt
+        if _is_header_or_body == 'body':
+            BF = fuzz_module.Body_Fuzz(body, _inject_param)  # inject point
+            BF.mutation("string")  # payload type
+            mutated_body = BF.build_mutation_body_parameter()  # build json to inject in jwt
 
-        for m_body in mutated_body:
-            m_body = m_body.strip()
-            if args.sign == 0:
-                _jwt = (base64.b64encode(header) + "." + (m_body) + "." + signature).replace("=",
-                                                                                           "")  # keep original signature
-            else:
-                _jwt = sign_message(header, base64.b64decode(m_body), args.secret)  # sign message
+            for m_body in mutated_body:
+                m_body = m_body.strip()
+                if args.sign == 0:
+                    _jwt = (base64.b64encode(header) + "." + (m_body) + "." + signature).replace("=",
+                                                                                               "")  # keep original signature
+                else:
+                    _jwt = sign_message(header, base64.b64decode(m_body), args.secret)  # sign message
 
-            print_jwt(header, base64.b64decode(m_body), _jwt.split(".")[2])
-            request_sender.send_req(_jwt)  # send request
+                print_jwt(header, base64.b64decode(m_body), _jwt.split(".")[2])
+                request_sender.send_req(_jwt)  # send request
 
 
 parser = argparse.ArgumentParser(description='Type start arguments')
@@ -103,6 +105,5 @@ else:
     args.sign = 1
 
 if int(args.pp) == 1:
-    inj_point_array = args.injet_point.split("|")
     print "init jwt", print_jwt(header, body, signature)
     start_fuzz(args, header, body, signature)
