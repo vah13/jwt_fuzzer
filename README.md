@@ -6,3 +6,8 @@ main.py --jwt "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiIsImtpZCI6IjAwMDEifQ.eyJ1c2VyIj
 
 
 before start it, please see request_sender.py file and configure the request
+
+
+
+//need to add zero signature checking
+
